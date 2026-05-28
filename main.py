@@ -206,4 +206,31 @@ def weight(val):
 @cli.command()
 def progress():
     """Track your historic weight change over time."""
-    data =
+    data = load_data()
+
+    # Filter out metadata like "goals" and find only days that actually have a logged weight
+    weight_history = []
+    for log_date in sorted(data.keys()):
+        if log_date == "goals":
+            continue
+        day_data = get_day_data(data, log_date)
+        if day_data.get("weight") is not None:
+            weight_history.append((log_date, day_data["weight"]))
+
+    if not weight_history:
+        console.print("[yellow]No weight history found yet. Use 'weight <val>' to log today's weight![/yellow]")
+        return
+
+    # Build a clean table to show the trend
+    table = Table(title="Weight Tracking History", title_justify="left")
+    table.add_column("Date", style="cyan")
+    table.add_column("Weight (lbs)", justify="right", style="yellow")
+
+    for log_date, wt in weight_history:
+        table.add_row(log_date, f"{wt} lbs")
+
+    console.print(table)
+
+
+if __name__ == "__main__":
+    cli()
